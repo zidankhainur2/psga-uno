@@ -25,6 +25,7 @@ func main() {
 	router := gin.Default()
 
 	// Register routes
+	routes.AuthRoutes(router)
 	routes.SetupPlayerRoutes(router)
 	routes.SetupGameRoutes(router)
 	routes.SetupScoreRoutes(router)

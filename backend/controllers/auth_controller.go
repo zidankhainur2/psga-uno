@@ -10,6 +10,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"google.golang.org/api/oauth2/v1"
 )
 
@@ -76,4 +77,33 @@ func GenerateJWT(user models.Player) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+}
+
+func RegisterOrUpdateUser(c *gin.Context) {
+	var user models.Player
+	if err := c.ShouldBindJSON(&user); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Cek apakah user sudah ada berdasarkan email
+	var existingUser models.Player
+	result := config.DB.Where("email = ?", user.Email).First(&existingUser)
+
+	if result.Error != nil { // Jika tidak ditemukan, buat user baru
+		user.ID = uuid.New()
+		if err := config.DB.Create(&user).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, user)
+	} else { // Jika sudah ada, update data user
+		existingUser.Name = user.Name
+		existingUser.AvatarURL = user.AvatarURL
+		if err := config.DB.Save(&existingUser).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, existingUser)
+	}
 }

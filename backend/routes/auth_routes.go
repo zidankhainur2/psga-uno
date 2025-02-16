@@ -11,5 +11,6 @@ func AuthRoutes(r *gin.Engine) {
 	{
 		authGroup.GET("/google", controllers.GoogleLogin)
 		authGroup.GET("/google/callback", controllers.GoogleCallback)
+		authGroup.POST("/register", controllers.RegisterOrUpdateUser)
 	}
 }
